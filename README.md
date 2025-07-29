@@ -1,1 +1,1 @@
-# Learning for temoplate code
+# Learning for template code
