@@ -12,6 +12,12 @@ TEST(BasicTest, CalcTest) {
 
     ASSERT_FLOAT_EQ(ds.get(), 4.14);
     EXPECT_EQ(dds.get(), "14.140000");
+
+    a.value(2);
+    ASSERT_FLOAT_EQ(ds.get(), 5.14);
+    EXPECT_EQ(dds.get(), "25.140000");
+
+    //ds.value(5.14);
 }
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

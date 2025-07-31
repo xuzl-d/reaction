@@ -1,10 +1,11 @@
 #ifndef REACTION_RESOURCE_H
 #define REACTION_RESOURCE_H
+#include "reaction/observeNode.h"
 
 namespace reaction
 {
     template <typename Type>
-    class Resource
+    class Resource : public ObserveNode
     {
     public:
         Resource() : m_ptr(nullptr) {}

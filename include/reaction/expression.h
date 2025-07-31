@@ -37,10 +37,17 @@ namespace reaction
         Expression(F &&fun, A &&...args)
             : Resource<ReturnType<Fun, Args...>>(), m_fun(std::forward<F>(fun)), m_args(std::forward<A>(args)...)
         {
+            this->updateObserver(std::forward<A>(args)...);
             evaluate();
         }
 
     private:
+        void valueChange() override
+        {
+            this->evaluate();
+            this->notify();
+        }
+
         void evaluate()
         {
             auto result = [&]<std::size_t... I>(std::index_sequence<I...>)
@@ -58,15 +65,19 @@ namespace reaction
     class Expression<Type> : public Resource<Type>
     {
     public:
-        template<typename T>
+
+        template <typename T>
         Expression(T &&value)
             : Resource<Type>(std::forward<T>(value))
         {
         }
 
-        Type get() const
+        template <typename U>
+            requires std::is_convertible_v<std::decay_t<U>, Type>
+        void value(U &&value)
         {
-            return this->getValue();
+            this->updateValue(std::forward<U>(value));
+            this->notify();
         }
     };
 }

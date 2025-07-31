@@ -2,7 +2,7 @@
 #define REACTION_DATASOURCE_H
 #include "reaction/expression.h"
 
-namespace reaction 
+namespace reaction
 {
     template <typename T, typename... Args>
     class DataSource : public Expression<T, Args...>
@@ -13,19 +13,16 @@ namespace reaction
         {
             return this->getValue();
         }
-
     };
 
-    
-
     template <typename T>
-    auto var(T&& value)
+    auto var(T &&value)
     {
         return DataSource<T>(std::forward<T>(value));
     }
 
     template <typename F, typename... Args>
-    auto calc(F&& f, Args&&... args)
+    auto calc(F &&f, Args &&...args)
     {
         return DataSource<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
     }
