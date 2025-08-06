@@ -5,8 +5,17 @@
 #include <utility>
 namespace reaction
 {
+    struct VarExpr
+    {
+    };
+    struct CalcExpr
+    {
+    };
+
     template <typename T, typename... Args>
-    class DataSource;
+    class ReactImpl;
+    template <typename T>
+    class React;
 
     template <typename T>
     struct ExpressionTraits
@@ -15,24 +24,27 @@ namespace reaction
     };
 
     template <typename T>
-    struct ExpressionTraits<DataSource<T>>
+    struct ExpressionTraits<React<ReactImpl<T>>>
     {
         using type = T;
     };
 
     template <typename Fun, typename... Args>
-    struct ExpressionTraits<DataSource<Fun, Args...>>
+    struct ExpressionTraits<React<ReactImpl<Fun, Args...>>>
     {
         using type = std::invoke_result_t<Fun, typename ExpressionTraits<Args>::type...>;
     };
 
     template <typename Fun, typename... Args>
-    using ReturnType = typename ExpressionTraits<DataSource<Fun, Args...>>::type;
+    using ReturnType = typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::type;
 
     template <typename Fun, typename... Args>
     class Expression : public Resource<ReturnType<Fun, Args...>>
     {
     public:
+        using ValueType = ReturnType<Fun, Args...>;
+        using ExprType = CalcExpr;
+
         template <typename F, typename... A>
         Expression(F &&fun, A &&...args)
             : Resource<ReturnType<Fun, Args...>>(), m_fun(std::forward<F>(fun)), m_args(std::forward<A>(args)...)
@@ -65,19 +77,13 @@ namespace reaction
     class Expression<Type> : public Resource<Type>
     {
     public:
+        using ValueType = Type;
+        using ExprType = VarExpr;
 
         template <typename T>
         Expression(T &&value)
             : Resource<Type>(std::forward<T>(value))
         {
-        }
-
-        template <typename U>
-            requires std::is_convertible_v<std::decay_t<U>, Type>
-        void value(U &&value)
-        {
-            this->updateValue(std::forward<U>(value));
-            this->notify();
         }
     };
 }
