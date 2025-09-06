@@ -1,5 +1,8 @@
+#ifndef REACTION_OBSERVERNODE_H
+#define REACTION_OBSERVERNODE_H
 #include <vector>
 #include <unordered_set>
+#include "reaction/concept.h"
 namespace reaction
 {
     class ObserveNode
@@ -33,7 +36,7 @@ namespace reaction
         std::vector<ObserveNode *> m_observers;
     };
 
-    using NodePtr = std::shared_ptr<ObserveNode>;
+
 
     // ObserverGraph to manage ObserveNodes
     // This class is responsible for managing the lifecycle of ObserveNodes
@@ -61,3 +64,4 @@ namespace reaction
         std::unordered_set<NodePtr> m_nodes;
     };
 }
+#endif // REACTION_OBSERVERNODE_H

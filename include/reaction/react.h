@@ -1,7 +1,7 @@
 #ifndef REACTION_ReactImpl_H
 #define REACTION_ReactImpl_H
 #include "reaction/expression.h"
-#include "reaction/concept.h"
+
 namespace reaction
 {
     template <typename T, typename... Args>
@@ -17,7 +17,7 @@ namespace reaction
         }
 
         template <typename U>
-            requires(Convertable<U, T> && IsVarExpr<ExprType>)
+            requires(Convertable<U, T> && IsVarExpr<ExprType> && !IsConstType<T>)
         void value(U &&value)
         {
             this->updateValue(std::forward<U>(value));
@@ -115,6 +115,7 @@ namespace reaction
         }
 
         auto get() const
+        requires IsDataReact<ReactType>
         {
             return getPtr()->get();
         }
@@ -139,9 +140,17 @@ namespace reaction
     };
 
     template <typename T>
+    auto constVar(T &&value)
+    {
+        auto ptr = std::make_shared<ReactImpl<const std::decay_t<T>>>(std::forward<T>(value));
+        ObserverGraph::getInstance().addNode(ptr);
+        return React(ptr);
+    }
+
+    template <typename T>
     auto var(T &&value)
     {
-        auto ptr = std::make_shared<ReactImpl<T>>(std::forward<T>(value));
+        auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(value));
         ObserverGraph::getInstance().addNode(ptr);
         return React(ptr);
     }
@@ -152,6 +161,12 @@ namespace reaction
         auto ptr = std::make_shared<ReactImpl<std::decay_t<F>, std::decay_t<Args>...>>(std::forward<F>(f), std::forward<Args>(args)...);
         ObserverGraph::getInstance().addNode(ptr);
         return React(ptr);
+    }
+
+    template <typename F, typename... Args>
+    auto action(F &&f, Args &&...args)
+    {
+        return calc(std::forward<F>(f), std::forward<Args>(args)...);
     }
 
 } // namespace reaction
