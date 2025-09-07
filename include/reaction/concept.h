@@ -2,6 +2,7 @@
 #define REACTION_CONCEPT_H
 #include <type_traits>
 #include <memory>
+#include "reaction/utility.h"
 namespace reaction
 {
     //=================== forward declaration =================//
@@ -12,6 +13,7 @@ namespace reaction
     class React;
 
     class ObserveNode;
+    class FieldBase;
     using NodePtr = std::shared_ptr<ObserveNode>;
 
     //=================== Expression Traits =================//
@@ -58,6 +60,12 @@ namespace reaction
     concept IsDataReact = requires(T t) {
         typename T::ValueType;
         requires IsReactNode<T> && !IsVoidType<typename T::ValueType>;
+    };
+
+    template <typename T>
+    concept HasField = requires(T t) {
+        { t.getId() } -> std::convertible_to<UniqueID>;
+        requires std::is_base_of_v<FieldBase, std::decay_t<T>>;
     };
 }
 #endif // REACTION_CONCEPT_H

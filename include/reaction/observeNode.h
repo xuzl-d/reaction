@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_set>
 #include "reaction/concept.h"
+#include "reaction/utility.h"
 namespace reaction
 {
     class ObserveNode
@@ -11,7 +12,9 @@ namespace reaction
         ObserveNode() = default;
         virtual ~ObserveNode() = default;
 
-        virtual void valueChange() {};
+        virtual void valueChange() {
+            this->notify();
+        };
 
         void notify()
         {
@@ -62,6 +65,42 @@ namespace reaction
     private:
         ObserverGraph() = default;
         std::unordered_set<NodePtr> m_nodes;
+    };
+
+
+    class FieldGraph
+    {
+    public:
+        static FieldGraph& getInstance()
+        {
+            static FieldGraph instance;  
+            return instance;
+        }
+
+        void addObj(uint64_t id, NodePtr node)
+        {
+            m_fieldMap[id].insert(node);
+        }
+
+        void delObj(uint64_t id)
+        {
+            m_fieldMap.erase(id);
+        }
+
+        void bindField(uint64_t id, NodePtr objPtr)
+        {
+            if(!m_fieldMap.count(id))
+            {
+                return;
+            }
+            for (auto& node : m_fieldMap[id])
+            {
+                node->addObserver(objPtr.get());
+            }
+        }
+    private:
+        FieldGraph() = default;
+        std::unordered_map<UniqueID, std::unordered_set<NodePtr>> m_fieldMap;
     };
 }
 #endif // REACTION_OBSERVERNODE_H

@@ -1,7 +1,7 @@
 #ifndef REACTION_ReactImpl_H
 #define REACTION_ReactImpl_H
 #include "reaction/expression.h"
-
+#include "reaction/utility.h"
 namespace reaction
 {
     template <typename T, typename... Args>
@@ -11,13 +11,19 @@ namespace reaction
         using Expression<T, Args...>::Expression;
         using ValueType = Expression<T, Args...>::ValueType;
         using ExprType = Expression<T, Args...>::ExprType;
-        auto get() const
+
+        template <typename Type>
+        void operator=(Type &&other)
+        {
+            value(std::forward<Type>(other));
+        };
+        decltype(auto) get() const
         {
             return this->getValue();
         }
 
         template <typename U>
-            requires(Convertable<U, T> && IsVarExpr<ExprType> && !IsConstType<T>)
+            requires(Convertable<T, U> && IsVarExpr<ExprType> && !IsConstType<T>)
         void value(U &&value)
         {
             this->updateValue(std::forward<U>(value));
@@ -34,6 +40,10 @@ namespace reaction
             if (--m_wearRefCount == 0)
             {
                 ObserverGraph::getInstance().removeNode(this->shared_from_this());
+                if constexpr (HasField<T>)
+                {
+                    FieldGraph::getInstance().delObj(this->getValue().getId());
+                }
             }
         }
 
@@ -114,10 +124,14 @@ namespace reaction
             return !m_weakPtr.expired();
         }
 
-        auto get() const
-        requires IsDataReact<ReactType>
+        decltype(auto) get() const
+            requires IsDataReact<ReactType>
         {
             return getPtr()->get();
+        }
+
+       ReactType& operator*(){
+            return *getPtr();
         }
 
         template <typename U>
@@ -140,9 +154,36 @@ namespace reaction
     };
 
     template <typename T>
+    using Field = React<ReactImpl<std::decay_t<T>>>;
+
+    class FieldBase
+    {
+    public:
+        template <typename T>
+        auto field(T &&value)
+        {
+            auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(value));
+            FieldGraph::getInstance().addObj(m_id, ptr);
+            return React(ptr);
+        }
+        virtual ~FieldBase() = default;
+
+        auto getId() const
+        {
+            return m_id;
+        }
+    private:
+        UniqueID m_id;
+    };
+
+    template <typename T>
     auto constVar(T &&value)
     {
         auto ptr = std::make_shared<ReactImpl<const std::decay_t<T>>>(std::forward<T>(value));
+        if constexpr (HasField<T>)
+        {
+            FieldGraph::getInstance().bindField(value.getId(), ptr);
+        }
         ObserverGraph::getInstance().addNode(ptr);
         return React(ptr);
     }
@@ -151,6 +192,11 @@ namespace reaction
     auto var(T &&value)
     {
         auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(value));
+        if constexpr (HasField<T>)
+        {
+            FieldGraph::getInstance().bindField(value.getId(), ptr);
+        }
+        
         ObserverGraph::getInstance().addNode(ptr);
         return React(ptr);
     }

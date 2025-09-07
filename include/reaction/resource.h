@@ -21,7 +21,7 @@ namespace reaction
 
         virtual ~Resource() = default;
 
-        Type &getValue() { 
+        Type &getValue() const { 
             if (!m_ptr)
             {
                 throw std::runtime_error("Resource is not initialized");
@@ -29,15 +29,7 @@ namespace reaction
             
             return *m_ptr; 
         }
-        const Type &getValue() const
-         {
-             if (!m_ptr)
-             {
-                 throw std::runtime_error("Resource is not initialized");
-             }
-            return *m_ptr; 
-        }
-
+       
         template <typename T>
         void updateValue(T&& value) {
             if (!m_ptr)
